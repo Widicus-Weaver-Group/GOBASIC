@@ -1,0 +1,614 @@
+===========================================================================
+Title: GOBASIC v5.0 for desktop
+Developer: Luyao Zou
+Date: Feb 2017
+---------------------------------------------------------------------------
+Feature Updated:
+>> Improve partition function interpolation for internal rotation.
+   The Q(T)=a*T^b form used in v4.5 is not sufficient to account for
+   the contribution from internal rotation and torsion motions.
+   Update the functional form to
+   Q(T) = a(1) * T^a(2) * (a(3) + exp(a(4)/T))
+
+>> Remove Q(T) fitting routine. Each molecule needs its own treatment
+   based on its top, internal rotation, vibrational states, and what goes into
+   the catalog.
+
+>> Fit Q(T) externally, save the coefficients to *par.co files, and
+   load them into GOBASIC via the 'parco' cell array.
+
+>> Update Code Files:
+   definevars.m     -- add parco cell array.
+   analysisscript.m -- load parco coefficients.
+   tausim.m         -- update partition function interpolation.
+   writeresult.m    -- update version tag. Output par coefficients in Table.txt
+   comp_label_gen.py -- update label generator.
+   partfunc.m       -- disable (ignore) this file.
+
+===========================================================================
+Title: GOBASIC v4.5 for desktop
+Developer: Luyao Zou
+Date: Dec 2015
+---------------------------------------------------------------------------
+Feature Updated:
+>> Improve partition function extrapolation.
+   Previous versions used Q(T) = a*T^{3/2}, where a is fitted.
+   This function form is only valid when molecule is nonlinear and has no
+   internal rotation or tunneling levels.
+   Current version implements Q(T) = a*T^b where both a and b are fitted.
+
+>> Fix a bug in displayresult.m, where the log10 values of column density
+   was displayed.
+
+>> Move 'range' from analysisscript.m to definevars.m for easier configuration.
+   The value of 'range' should be set once for all and held unvaried for a
+   particular line survey data. Otherwise previous fit import will raise
+   array dimension error.
+   However, for different set of line surveys, especially those at different
+   frequency bands, the value of 'range' should be adjusted accordingly to
+   cover the full Gaussian profile. See more details in GOBASICAlgorithm.pdf
+
+>> Update Code Files:
+   definevars.m     -- move 'range' here
+   analysisscript.m -- remove 'range'. Update 'aco' to reflect change in
+                       partition function calculation.
+   partfunc.m       -- update partition function extrapolation procedure.
+                       outputs array (a,b) instead of number a
+   tausim.m         -- reflect the change of 'aco' from number to cell array
+   totalsim.m       -- reflect the change of 'aco' from number to cell array
+   err.m            -- reflect the change of 'aco' from number to cell array
+   displayresult.m  -- Fix the bug of displaying log10 column density
+   writeresult.m    -- update version tag
+
+
+===========================================================================
+Title: GOBASIC v4.4 for desktop
+Developer: Luyao Zou
+Date: June 2015
+---------------------------------------------------------------------------
+Feature Updated:
+>> Rescale temperature input by dividing 100 (rescale 1000 to 10)
+   instead of taking natural logarithm. This is because a linear rescaling
+   allows negative temperature input, which can be used to fit masers.
+
+>> Update uncertainty estimation. Calculate full variance-covariance
+   matrix, instead of stand-alone ones for each component.
+
+>> Update output file format. Constraint the length of lines in
+   FitTable.txt below 80 characters for easier reading.
+
+>> Move beamdilution calculation & previous fit importation into
+   analysisscript.m so that they can be called and calculated once for all.
+
+>> Updated Code Files:
+   tausim.m  -- update equations for tau
+   totalsim.m  -- update equations for totalsim
+   analysisscript.m  -- refactored, include beamdilution calc & previous
+                        fit import
+   anonfun4.m -- update equations for creating fitting function
+   definevars.m  -- transpose init, low and up matrices to put the
+                    parameters for each component in the same column
+   err.m      -- update uncertainty estimation to match the new spectral
+                 generating function
+   linecenter.m  -- transpose row/column to match the new matrix orientation
+   optest.m   -- update output and uncertainty handling section to match
+                 the new spectral generating function
+   displayresult.m -- update to match the change of fitted parameter matrix
+   writeresult.m   -- update output table format
+   analysisscript.m -- update previous fit importation
+
+
+===========================================================================
+Title: GOBASIC v4.3 for desktop
+Developer: Luyao Zou
+Date: Feb 2015
+---------------------------------------------------------------------------
+Feature Updated:
+>> The gaussian profile we use in GOBASIC is incorrect, as pointed out by
+   an anonymous referee. The gaussian function should be performed on the
+   optical depth \tau, thus goes into the exponential exp(-\tau), instead
+   of directly multiplied to the brightness temperature evaluated at the
+   peak center of a transition.
+
+>> The beam size is calculated on the fly due to its dependence on the
+   wavelength. The diameter of the telescope, instead of the source size,
+   is taken as an user input. Then at each transition frequency, a beam
+   size is generated using
+   \theta_b = 1.39*wavelength/(D*pi)*180*3600 (arcsec)
+   where wavelength is converted from the center frequency of the given
+   molecular transition, and D is the dish diameter
+
+>> Fixed an subtle mistake in err.m
+
+>> Updated Code files:
+   definevars.m   --  update input parameter
+   analysisscript.m -- remove calculation of a universal beam filling factor
+   anonfun4.m     --  update function arguments
+   err.m          --  update uncertainty calculation
+   linecalc.m     --  update unit conversion of Agu
+   optest.m       --  update uncertainty calculation
+   totalsim.m     --  update equations and arguments
+   writeresult.m  --  update version tag
+
+
+>> Deleted Code files:
+   molsim.m
+   maxtemp.m
+   [no longer needed. Functions combined in 'totalsim.m']
+
+
+===========================================================================
+Title: GOBASIC v4.2 for desktop
+Developer: Luyao Zou
+Date: Dec 2014
+---------------------------------------------------------------------------
+Feature Updated:
+>> Add a cut-off option of upper state energy for the transitions. Now the
+   user can also knock-off undesired warm lines or cold lines before the
+   fit.
+
+>> Modify the way of spectra synthesis in 'molsim.m'
+   The x-data window opened for generating Gaussian line-profiles are
+   centered around shifted line centers, instead of line centers from the
+   catalog. This modification is able to prevent missing spectra at large
+   shift parameters.
+   See 'GOBASIC_Algorithm.pdf' for detailed code information
+
+>> Added Code file:
+   linecenter.m  -- replace jlabel_gen.m
+
+>> Deleted Code files:
+   jlabel_gen.m
+
+
+===========================================================================
+Title: GOBASIC v4.1 for desktop
+Developer: Luyao Zou
+Date: Sept 2014
+---------------------------------------------------------------------------
+Feature Updated:
+>> Add a python script, 'comp_label_gen.py' to automatically generate the
+   code with the correct Matlab format for GOBASIC 'definevars.m' catalog
+   section. It also generates the corresponding label of the fitting
+   components for GOBASIC output files, so that one do not need to write
+   down the names and order of 20+ components for each fitting job.
+
+   The user need to create a text file of the component name list. Each
+   name takes a single line. If one needs to fit multiple velocity
+   components for a given molecule, the catalog and partition function
+   file names need to be duplicated in the list. The python script will
+   output a file called 'component_label.m' with the correct Matlab
+   format, and the user can copy that to the corresponding section in
+   'definevars.m'
+
+
+>> Add labels to the legend, and '*Fit.csv' files for each column. The
+   labels are typeset in 'definevars.m' manually, and the user may take
+   the advantage of the python script. If the labels are left blank,
+   by default fit+number 'fit#' will be used as component labels.
+
+>> The user may need to customize the script for their catalog directory
+   and naming system. Currently, the output format of 'comp_label_gen.py'
+   is '../CatalogFile/MoleculeName.txt' for catalog files
+      '../CatalogFile/MoleculeNamepar.par' for partition function files,
+   and 'MoleculeName' for labels.
+
+>> v4.1 is compatible with v4.0 on importing and exporting data. The only
+   difference is that v4.1 is capable of adding customized labels to better
+   mark all the components fitted
+
+
+===========================================================================
+Title: GOBASIC v4.0 for desktop
+Developer: Luyao Zou
+Date: Sept 2014
+---------------------------------------------------------------------------
+Feature Updated:
+>> Largely modify the layout and comments of the codes for the easy of
+   reading and maintenance. Delete redundant function files.
+
+>> All user specified parameters are all typeset in a single file:
+   'definevars.m'. The user no longer need to change a bunch of files
+   for each fitting job.
+
+>> The user can specify any numbers of molecules to fit!
+
+---------------------------------------------------------------------------
+Code file list:
+- analysisscript.m
+- anonfun4.m
+- definevars.m
+- delimitcatalogfiles.pl
+- displayresult.m
+- err.m
+- flag.m
+- linecalc.m
+- linecenter.m
+- llq.cmd
+- maxtempcalc.m
+- molsim.m
+- optest.m
+- partfunc.m
+- readme.txt
+- Run.m
+- sourcecode.header
+- totalsim.m
+- trunccat.m
+- writeresults.m
+
+Python file list:
+- comp_label_gen.py
+- PickGOBASIC.py
+- SumGOBASIC.py
+
+===========================================================================
+Title: GOBASIC v3.3 for desktop
+Developer: Luyao Zou
+Date: Sept 2014
+---------------------------------------------------------------------------
+Feature Updated:
+>> Clarify unit conversions:
+   Throughout GOBASIC, column density (nt) is always in cm^-2;
+   velocity width and shift are always in km/s;
+   In 'maxtempcalc.m', line frequency is in Hz;
+   In 'molsim.m', line frequency is in MHz
+
+>> Fix bug in error propagation.
+   Meanwhile, the user can choose to propogate the uncertainty either from
+   the goodness of the fit, or the noise level of the observation from the
+   raw telescope data before deconvolution.
+   Details of error propagation pls see the appendix of the GOBASIC paper.
+
+>> Fix an error of matrix dimention mismatch when only one molecular line
+   exists in the spectra range.
+
+>> Make the display of results more readable in matlab terminal
+
+>> Add header to output csv files. Header contains program version info.
+
+
+===========================================================================
+Title: GOBASIC v3.2 for desktop
+Developer: Luyao Zou
+Date: Aug 2014
+---------------------------------------------------------------------------
+Feature Updated:
+>> Add flag feature in 'definevars.m'. Now GOBASIC is able to flag out
+   spikes, and everything within the flag window is not calculated into
+   the fitting algorithm. Nevertheless, when presenting the fitting results,
+   the molecular lines in the flagged frequencies are still plotted.
+
+Feature REMOVED:
+>> The feature of truncating frequency window of the observational spectra
+   in 'definevars.m' is disabled because of potential inconsistancy and
+   confusion in including previous fitting results.
+
+
+===========================================================================
+Title: GOBASIC v3.1 for desktop
+Developer: Luyao Zou
+Date: July 2014
+---------------------------------------------------------------------------
+Feature Updated:
+>> Fix the Doppler shift calculation in 'molsim.m'
+   Previously, uniform Doppler shift was applied to all frequencies.
+   However, the Doppler shift is propotional to center frequency. The
+   deviation (~1 MHz) in CSO band is negligible because the frequency
+   resolution of CSO band is 1 MHz. However, the deviation will be much
+   larger at HIFI band 5 (~ 1 THz).
+   Now Doppler shift of each molecular transition is calculated based on
+   the shift in velocity space and the line center frequency.
+
+
+===========================================================================
+Title: GOBASIC v3.0 for desktop
+Developer: Luyao Zou
+Date: June 2014
+---------------------------------------------------------------------------
+Feature Updated:
+>> Fix the problem of not finding global minimum by changing initial guess
+   of column density and temperature to their logrithm.
+>> Significantly improve the speed of spectra simulation by vectorization.
+>> Add tutorial documents
+
+---------------------------------------------------------------------------
+Major changes in codes:
+>> optest.m
+   Now column density is in its log10 value, and temperature is in its
+   natural logrithm value.
+   After optimization (line 51-52), convert the log values back to natural
+   values before output.
+
+>> jlabel_gen.m
+   New file. Use to generate a label matrix for molsim()
+
+>> molsim.m
+   MAJOR improvement in code! Replace for loop by matrix operations.
+   The basic idea is to use sparse matrix opteration to generate a matrix
+   containing all gaussian lineshapes in the observation frequency range,
+   then sum them up all together to create the simulated spectra.
+   Three matrices are used: ilabel, jlabel and svalue, corresponding to
+   the three vector elemenents in MATLAB sparse matrix generation function
+   sparse(i,j,s).
+   jlabel is created from 'jlabel_gen.m'. Each column of jlabel represents
+   one molecular transition frequency (taken from 'molfreq'), and each
+   element stores a matrix index of a 'obsfreq' frequency where the
+   gaussian value is calculated. Only a certain 'range' of frequencies +/-
+   line center is calculated (usu ~10 \sigma), because outside range the
+   value is so close to 0 that calculation is unnecessary.
+
+   ilabel creates the numbering of molecular transitions
+   svalue() calculates the gaussian value.
+   Then ilabel, jlabel and svalue are used to create the sparse matrix,
+   whose columns represent the molecular transitions and rows represent
+   the intensity at all observation frequencies.
+   The sparse matrix is then summed by column, which creates the sum of
+   all molecular lines in the observation frequency range. This is the
+   final simulated spectra.
+
+   For more details, please read document file 'vectorization.pdf'
+
+>> analysisscript.m
+   Add lines to create jlabel for each molecular component.
+
+>> definevars.m
+   Add lines to specify 'range'
+
+
+===========================================================================
+Title: GOBASIC v2.1 for Emerson Cluster
+Developer: Luyao Zou
+Date: Mar. 2014
+---------------------------------------------------------------------------
+Feature Updated:
+>> Fix a stupid mistake in calling the wrong columns in the catalog files
+   that causes fitting problems
+>> Ready to use on Emerson Center
+---------------------------------------------------------------------------
+Run on Emerson Center:
+>> Log on to 'star' cluster
+>> Modify 'definevars.m' 'optest.m' 'anonfun4.m' accordingly.
+   !! Do make sure everything is correct! Catalogs and Results should be
+   put into independent shared folders.
+>> In the command line, type in 'mcc -mv Run.m'. The command line will
+   compile the matlab files into executable c files.
+>> Modify 'llq.cmd' load leveler file. Specify your directory.
+>> Log on to 'euch4e' cluster, cd to your Gobasic directory, and type in
+   'llsubmit llq.cmd' to submit the job
+---------------------------------------------------------------------------
+Check List Before Compiling:
+>> ALWAYS use relative directories
+>> definevars.m
+  * change 'obspath'
+  * change 'source' size if is known. Otherwise type in 0
+  * change 'appeff' and 'beam' size if necessary
+  * change frequency window if necessary
+  * change 'molpath1-4' for catalog files
+  * change 'parpath1-4' for partition function files
+  * change 'resultpath' and 'trialname' for output
+  * include previous fittings if necessary
+>> anofunc4.m
+  * choose correct component numbers by comment out the other lines
+   (end of the code)
+  * include previous fittings if necessary
+>> optest.m
+  * change initial guess matrix and low, up limits
+  * change 'MaxIter', 'MaxFunEvals', 'TolMesh', etc options accordingly
+   (ususally there is no need to change)
+  * choose correct component numbers by comment out the other lines
+   in 'fit*=sim*(x)' chunk and '???comp' chunk.
+
+===========================================================================
+Title: GOBASIC v2.0 Revision
+Revisor: Luyao Zou
+Date: Dec.2013-Jan.2014
+---------------------------------------------------------------------------
+Feature Revised:
+>> Include the ability to handle different source size for different
+   components.
+>> Include calibrated observation spectra in the output file.
+>> Include a user-specified frequency window in "definevars.m" in case the
+   user wants to cut off the observational data.
+>> Change all fucntion and variable names to lowercase letters (and renamed
+   a few) in order to avoid ambiguity in various operating systems.
+>> Improve program efficiency in "functiontest" by vectorization.
+
+---------------------------------------------------------------------------
+Major changes in codes:
+>> definevars.m
+   The feature of handling different source and beam size for different
+   components are realized by assigning specific numbers to matrices
+   "source" and "beam". Both are 1*4 row vectors, whose components
+   correspond to the source and beam sizes of each fit component. The beam
+   dilution factor B=source^2/(source^2+beam^2) are calculated later in the
+   program to calibrate the fitting data for each component. The programs
+   is designed so that if source=0 or source>beam, B is automatically set
+   to 1, which means no beam dilution effect is accounted.
+
+>> analysisscript.m
+   Delete "source" and "beam" arguments in DatCal. Since the beam dilution
+   effect is accounted in the fitting data, there is no more need to put
+   these parameters in the calibration of observation data. Also this is
+   the way it should be treated, since the observational data should only
+   be calibrated by apperture efficiency and should not be rescaled further
+
+>> spectrumcalibrate.m
+   Delete "source" and "beam" arguments in this function
+
+>> anonfun4.m
+   Add lines to calculate the vector of beam dilution factor.
+
+>> totalsim.m
+   Add argument "beamdilution" to the function in order to calibrate
+   fitting data.
+
+>> maxtempcalc.m
+   Add argument "beamdilution" to the function, and calibrate the fitting
+   data.
+
+>> onecomp.m  twocomp.m  threecomp.m  fourcomp.m
+   Add "obsint" to "Fit" matrix to include observation data into the output
+   inventory.
+
+>> optest.m
+   CO lines are flagged, removed from "obsint" and stored seperately in
+   "co" before fitting. The final output file will add "co" back to the
+   observation spectrum.
+
+---------------------------------------------------------------------------
+The fitting process follows the previous version.
+First, edit definevars.m, optest.m and anonfun4.m
+Second, run "functiontest" in the command line
+Third, run "optest" in the command line
+
+Major changes in input method:
+>> Tab delimited catalog files can be stored in a specific folder, in which
+   case the perl codes can be skipped. The default of perl codes is OFF.
+
+>> Individual source and beam size for each component should be specified
+   in "definevars.m"
+
+>> The second column in the final output .csv file is the calibrated
+   observation spectrum, including CO lines.
+
+---------------------------------------------------------------------------
+>> To generate a simulated observation spectrum, run the following codes in
+   command line
+
+************************
+freq = (FREQ_MIN:STEP:FREQ_MAX)';  % define a frequency window with desired
+% step interval (in MHz). Type in specific numbers.
+dlmwrite('filepath.csv',horzcat(freq,zeros(size(freq))),'precision',10);
+% write data to file. The 'filepath.csv' is the filepath of the simulated
+% observation spectrum.
+% Go to "definevars.m" and assign "obspath"  with 'filepath', and assign
+% the rest directories accordingly.
+functiontest
+simdata =  totalsim(molcal1(:,1),data(:,1),agulist1,a1,eup_j1,NT,FWHM,...
+TEMP,SHIFT,BEAMDILUTION) % + totalsim(...) + ...
+% NT,FWHM,TEMP,SHIFT,BEAMDILUTION are the user specified arguments. One
+% "totalsim()" function generates one simulated component. If multiple
+% components are needed, add more "totalsim()" with the same syntax and
+% different user specified argument values.
+dlmwrite('filepath.csv',[data(:,1) simdata],'precision',10);
+*************************
+
+Now a simulated spectrum should be saved to "filepath.csv"
+
+
+===========================================================================
+Title: GOBASIC
+Authors: Mary Radhuber
+===========================================================================
+Code names: Agu.m, AList.m, AnalysisScript.m, anonfun4.m, ConstCalc.m,
+            DefineVars.m, delimitcatalogfiles.pl, EinsteinAFind.m, ELJ.m,
+            ELOFreq.m, ErrorBack.m, ErrorForward.m, EUJ.m, EUPFreq.m,
+            fourcomp.m, FunctionTest.m, LimitData.m, LogInt.m,
+            MaxTempCalc.m, molSim.m, onecomp.m, optest.m,
+            PartitionFunction.m, PushResults.m, RenameandKill.m,
+            SpectrumCalibrate.m, threecomp.m, totalSim.m, twocomp.m
+
+Language: MATLAB
+
+Code tested under the following compilers/operating systems:
+Windows MATLAB 7.14, MATLAB 8, MATLAB 8.1, Linux MATLAB 8.1
+
+Description of input data: Formatted partition function file and .cat file
+in standard JPL format.  Observational data file.  Self absorption file.
+
+Description of output data: best fit parameters and .csv formatted fit
+simulation
+
+System requirements: MATLAB and Active Perl must be installed.
+
+Calls to external routines: none
+
+Additional comments: Catalog files must be formatted before analysis
+program can be run, however there is a script in the program called to do
+this. The .par file must be formatted by hand.  Example file provided as
+and Molecule.par. Catalog and .par files should be placed in the GOBASIC
+folder.
+
+The following files must be edited to run a new fit: DefineVars.m,
+optest.m, and anonfun4.m
+
+DefineVars.m:
+line 5 'obspath' - string pointing to the observational data comma
+                   delimited file
+line 7 'AppEff' - apperture efficiency of the telescope used
+line 9 'Source' - the source size in arcsec, or 0 if unknown
+line 11 'Beam' - the beam size in arcsec
+line 13 'threshold' - noise threshold in K, usually from 3-sigma rms noise
+lines 16-19 'molpath1', etc. - strings pointing to the molecules to be fit.
+                               All four paths must be defined even if less
+                               than four components will be fit
+lines 29-33 'parpath1', etc. - strings pointing to the .par data of the
+                               molecules to be fit.  All four paths must be
+                               defined for the same molecules in the same
+                               order as 'molpath'.
+line 35 'resultpath' - string to where the results file should be printed.
+                       The folder specified must exist before the
+                       optimization is run or the 'PushResults' function
+                       will fail.
+line 36 'trialname' - Enter the name of the molecule or the trial to be
+                      run.  The 'PushResults' file will output the fit file
+                      as resultspath\trialname.csv
+lines 39-50 'S02Path", etc. - change paths to where the PushResults
+                              function has pushed the previous fit results.
+                              Leave molecules that haven't previously been
+                              fit commented out.  Additional molecules can
+                              be added to this list if the proscribed
+                              format is followed.  This will also require
+                              adding the molecule to the anonfun4 file.
+
+optest.m:
+lines 5-16 'low', 'up', and 'init' - low is the lower limit of all fit
+                                     parameters, 'up' is the upper limit of
+                                     all fit parameters, 'init' is the
+                                     initial position of the fit.  All
+                                     values must be defined, low must be
+                                     less than up or the pattern search fit
+                                     will throw an error and 'init' must be
+                                     in the range of (low,up) or the
+                                     minimum of the function in this range
+                                     will not be found.
+
+lines 29-32 - only the desired number of fits should be left uncommented.
+              Exactly one option must be left uncommented.
+
+anonfun4.m lines 9-19 - molecule fits must be uncommented according to
+                        which previous fits are desired to be included.
+                        Additional molecules can be added as long as the
+                        proscribed format is followed.
+lines 48-51 - only the desired number of fits should be left uncommented.
+              Exactly one option must be left uncommented.
+
+Once the changes have been made to the files the user can run the program
+by running the 'FunctionTest' command in the MATLAB command prompt.
+This will format all of the files, import the observational data, molecular
+data, and previous fit data.  If any changes are made to the 'DefineVars.m'
+file the 'FunctionTest' command must be run again.  To begin a fit the user
+runs the 'optest' command.  If the user desires to change the number of
+components used in a fit without changing which molecules are defined for
+those components in 'DefineVars.m' the 'optest.m' and 'anonfun.m' files can
+be edited and then 'optest' can be run again without needing to run
+'FunctionTest' an additional time.
+
+If the user wants to create a synthetic spectrum in the range of the
+observational data they can use the 'totalsim' command.  The user should
+type in the command line:
+'totalsim(DatCal(:,1),DatCal(:,end),AguList,A,EUJ,NT,FWHM,Temp,Shift)'
+DatCal(:,1),DatCal(:,end),AguList,A, and EUJ are all calculated by the
+program so the user should type these exactly.  The NT,FWHM,Temp, and Shift
+are the user specified parameters.
+
+===========================================================================
+The AAS gives permission to anyone who wishes to use these subroutines
+to run their own calculations.  Permission to republish or reuse these
+routines should be directed to the Executive Officer of the AAS.
+
+Note that the AAS does not take responsibility for the content of the
+source code.  Potential users should be wary of applying the code
+to conditions that the code was not written to model and the accuracy of
+the code may be affected when compiled and executed on different systems.
+===========================================================================
